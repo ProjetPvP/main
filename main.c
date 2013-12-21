@@ -14,7 +14,7 @@ typedef struct s_pos t_pos;
 
 struct s_ecran_de_jeu{char** ecran; int hauteur; int largeur; t_pos positionHeros;};     //creation de la structure qui va former l'écran
 typedef struct s_ecran_de_jeu * t_ecran_de_jeu;
-
+fkdlsofjfglojsgfjlsdk
 //==========================================================//
 //                   variables globales                     //
 //==========================================================//
