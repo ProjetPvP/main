@@ -23,7 +23,6 @@ typedef struct s_ecran_de_jeu * t_ecran_de_jeu;
       SDL_Surface * ecran = NULL;
       SDL_Surface * Heros = NULL;
       SDL_Surface * myMap = NULL;
-
       SDL_Rect positionHeros;
       SDL_Rect positionMap;
 
