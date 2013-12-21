@@ -48,8 +48,10 @@ t_ecran_de_jeu create_ecran_de_jeu(int hauteur, int largeur, int posHerosX, int 
       SDL_Event event;
       SDL_Surface * ecran = NULL;
       SDL_Surface * Heros = NULL;
+      SDL_Surface * myMap = NULL;
 
       SDL_Rect positionHeros;
+      SDL_Rect positionMap;
 
 //==========================================================//
 //                     initMatriceVide                      //
@@ -81,6 +83,7 @@ void initMatrice(t_ecran_de_jeu matrice)                                        
 void LectureMatrice(t_ecran_de_jeu matrice, SDL_Surface* ecran)
 {
       SDL_FillRect(ecran, NULL, SDL_MapRGB(ecran->format, 255, 255, 255));
+      //SDL_BlitSurface(myMap, NULL, ecran, &positionMap);
       for(int i = 0; i<HAUTEUR; i++)
       {
             for (int j = 0; j<LARGEUR; j++)
@@ -109,12 +112,20 @@ bool verifierPoussee(t_ecran_de_jeu matrice, int direction, t_pos positionHeros,
             {
                   return false;
             }
+            else if (matrice->ecran[positionHeros.ligne][positionHeros.colonne-1] == ' ')
+            {
+                  return true;
+            }
       }
       if (direction == DROITE)
       {
             if (positionHeros.colonne > LARGEUR-2-deplacement-LARGEURHEROSPIXEL)            // parce que la matrice est définie sur [0-(LARGEUR-1)][0-(HAUTEUR-1)]
             {                                                                               // LARGEURHEROSPIXEL pour pas que le heros dépasse l'écran
                   return false;
+            }
+            else if (matrice->ecran[positionHeros.ligne][positionHeros.colonne+1] == ' ')
+            {
+                  return true;
             }
       }
       if (direction == HAUT)
@@ -123,6 +134,10 @@ bool verifierPoussee(t_ecran_de_jeu matrice, int direction, t_pos positionHeros,
             {
                   return false;
             }
+            else if (matrice->ecran[positionHeros.ligne-1][positionHeros.colonne] == ' ')
+            {
+                  return true;
+            }
       }
       if (direction == BAS)
       {
@@ -130,8 +145,12 @@ bool verifierPoussee(t_ecran_de_jeu matrice, int direction, t_pos positionHeros,
             {
                   return false;
             }
+            else if (matrice->ecran[positionHeros.ligne+1][positionHeros.colonne] == ' ')
+            {
+                  return true;
+            }
       }
-      return true;
+      return false;
 }
 
 void replacementHeros(t_ecran_de_jeu matrice, int direction, int nb)
@@ -180,6 +199,8 @@ int main ( int argc, char** argv )
 {
       positionHeros.x = 200;
       positionHeros.y = 300;
+      positionMap.x = 0;
+      positionMap.y = 0;
       t_ecran_de_jeu matrice;
       matrice = create_ecran_de_jeu(HAUTEUR, LARGEUR, positionHeros.x, positionHeros.y);
       initMatrice(matrice);
@@ -193,9 +214,10 @@ int main ( int argc, char** argv )
       ecran = SDL_SetVideoMode(LARGEUR, HAUTEUR, 32, SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_RESIZABLE);
       SDL_FillRect(ecran, NULL, SDL_MapRGB(ecran->format, 255, 255, 255));
       Heros = SDL_LoadBMP("link.bmp");
+      myMap = SDL_LoadBMP("sol4.bmp");
       SDL_Flip(ecran);
-      int nbDeplacement =  3;
-      SDL_EnableKeyRepeat(50, 1);
+      int nbDeplacement =  1;
+      Uint8 *keystates = SDL_GetKeyState( NULL );
       while(continuer)
       {
             SDL_PollEvent(&event);
@@ -206,30 +228,43 @@ int main ( int argc, char** argv )
                   switch (event.key.keysym.sym)
                   {
                         case SDLK_ESCAPE : continuer = 0;break;
-                        case SDLK_UP :    if (verifierPoussee(matrice, HAUT,matrice->positionHeros, nbDeplacement))
-                                          {
-                                                replacementHeros(matrice, HAUT, nbDeplacement);
-                                          }
-                                          break;
-                        case SDLK_DOWN : if (verifierPoussee(matrice, BAS, matrice->positionHeros, nbDeplacement))
-                                          {
-                                                replacementHeros(matrice, BAS, nbDeplacement);
-                                          }
-                                          break;
-                        case SDLK_RIGHT : if (verifierPoussee(matrice, DROITE, matrice->positionHeros, nbDeplacement))
-                                          {
-                                                replacementHeros(matrice, DROITE, nbDeplacement);
-                                          }
-                                          break;
-                        case SDLK_LEFT : if (verifierPoussee(matrice, GAUCHE, matrice->positionHeros, nbDeplacement))
-                                          {
-                                                replacementHeros(matrice, GAUCHE, nbDeplacement);
-                                          }
-                                          break;
                         default : break;
                   }
             }
-            LectureMatrice(matrice, ecran);
+
+            if (keystates[SDLK_UP])                                     // les keystats permettent le déplacement en diagonal.
+            {
+                  if (verifierPoussee(matrice, HAUT,matrice->positionHeros, nbDeplacement))
+                  {
+                        replacementHeros(matrice, HAUT, nbDeplacement);
+                  }
+            }
+            if (keystates[SDLK_DOWN])
+            {
+                  if (verifierPoussee(matrice, BAS, matrice->positionHeros, nbDeplacement))
+                  {
+                        replacementHeros(matrice, BAS, nbDeplacement);
+                  }
+            }
+            if (keystates[SDLK_RIGHT])
+            {
+                  if (verifierPoussee(matrice, DROITE, matrice->positionHeros, nbDeplacement))
+                  {
+                        replacementHeros(matrice, DROITE, nbDeplacement);
+                  }
+            }
+            if (keystates[SDLK_LEFT])
+            {
+                  if (verifierPoussee(matrice, GAUCHE, matrice->positionHeros, nbDeplacement))
+                  {
+                        replacementHeros(matrice, GAUCHE, nbDeplacement);
+                  }
+            }
+
+
+
+
+            LectureMatrice(matrice, ecran); // Affiche la matrice telle qu'elle est
       }
 
     return 0;
