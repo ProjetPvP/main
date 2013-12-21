@@ -15,7 +15,17 @@ typedef struct s_pos t_pos;
 struct s_ecran_de_jeu{char** ecran; int hauteur; int largeur; t_pos positionHeros;};     //creation de la structure qui va former l'écran
 typedef struct s_ecran_de_jeu * t_ecran_de_jeu;
 
+//==========================================================//
+//                   variables globales                     //
+//==========================================================//
 
+      SDL_Event event;
+      SDL_Surface * ecran = NULL;
+      SDL_Surface * Heros = NULL;
+      SDL_Surface * myMap = NULL;
+
+      SDL_Rect positionHeros;
+      SDL_Rect positionMap;
 
 //==========================================================//
 //                     malloc matrice                       //
@@ -39,19 +49,6 @@ t_ecran_de_jeu create_ecran_de_jeu(int hauteur, int largeur, int posHerosX, int 
 	fprintf(stderr,"hauteur[%d]",hauteur);
 	return matrice;
 }
-
-
-//==========================================================//
-//                   variables globales                     //
-//==========================================================//
-
-      SDL_Event event;
-      SDL_Surface * ecran = NULL;
-      SDL_Surface * Heros = NULL;
-      SDL_Surface * myMap = NULL;
-
-      SDL_Rect positionHeros;
-      SDL_Rect positionMap;
 
 //==========================================================//
 //                     initMatriceVide                      //
