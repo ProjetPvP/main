@@ -5,6 +5,8 @@
 #define LARGEUR 600
 #define LARGEURHEROSPIXEL 24
 #define HAUTEURHEROSPIXEL 30
+#define LARGEURMINE 30
+#define prout 1
 
 enum {HAUT, BAS, GAUCHE, DROITE};
 char tableau_ecran[HAUTEUR][LARGEUR];
@@ -14,17 +16,8 @@ typedef struct s_pos t_pos;
 
 struct s_ecran_de_jeu{char** ecran; int hauteur; int largeur; t_pos positionHeros;};     //creation de la structure qui va former l'écran
 typedef struct s_ecran_de_jeu * t_ecran_de_jeu;
-fkdlsofjfglojsgfjlsdk
-//==========================================================//
-//                   variables globales                     //
-//==========================================================//
 
-      SDL_Event event;
-      SDL_Surface * ecran = NULL;
-      SDL_Surface * Heros = NULL;
-      SDL_Surface * myMap = NULL;
-      SDL_Rect positionHeros;
-      SDL_Rect positionMap;
+
 
 //==========================================================//
 //                     malloc matrice                       //
@@ -36,7 +29,7 @@ t_ecran_de_jeu create_ecran_de_jeu(int hauteur, int largeur, int posHerosX, int 
 	t_ecran_de_jeu matrice = (t_ecran_de_jeu)malloc (sizeof(struct s_ecran_de_jeu));
 	matrice->ecran = (char**)malloc(hauteur*sizeof(char*));
 	int i;
-	for(i=0; i<largeur; i++)
+	for(i=0; i<hauteur; i++)
 	{
 		matrice->ecran[i]=(char*)malloc(largeur*sizeof(char));
 	}
@@ -48,6 +41,21 @@ t_ecran_de_jeu create_ecran_de_jeu(int hauteur, int largeur, int posHerosX, int 
 	fprintf(stderr,"hauteur[%d]",hauteur);
 	return matrice;
 }
+
+
+//==========================================================//
+//                   variables globales                     //
+//==========================================================//
+
+      SDL_Event event;
+      SDL_Surface * ecran = NULL;
+      SDL_Surface * Heros = NULL;
+      SDL_Surface * myMap = NULL;
+      SDL_Surface * mine = NULL;
+
+      SDL_Rect positionHeros;
+      SDL_Rect positionMap;
+      SDL_Rect positionMine;
 
 //==========================================================//
 //                     initMatriceVide                      //
@@ -62,6 +70,7 @@ void initMatrice(t_ecran_de_jeu matrice)                                        
                   if (positionHeros.x == j && positionHeros.y == i)
                   {
                         matrice->ecran[i][j] = 'H';
+                        matrice->ecran[i-40][j-50] = 'M';
                   }
                   else
                   {
@@ -79,7 +88,7 @@ void initMatrice(t_ecran_de_jeu matrice)                                        
 void LectureMatrice(t_ecran_de_jeu matrice, SDL_Surface* ecran)
 {
       SDL_FillRect(ecran, NULL, SDL_MapRGB(ecran->format, 255, 255, 255));
-      //SDL_BlitSurface(myMap, NULL, ecran, &positionMap);
+      SDL_BlitSurface(myMap, NULL, ecran, &positionMap);
       for(int i = 0; i<HAUTEUR; i++)
       {
             for (int j = 0; j<LARGEUR; j++)
@@ -90,15 +99,67 @@ void LectureMatrice(t_ecran_de_jeu matrice, SDL_Surface* ecran)
                         positionHeros.y = i;
                         SDL_BlitSurface(Heros, NULL, ecran, &positionHeros);
                   }
+                  if (matrice->ecran[i][j] == 'M')
+                  {
+                        positionMine.x = j;
+                        positionMine.y = i;
+                        SDL_BlitSurface(mine, NULL, ecran, &positionMine);
+                  }
             }
       }
       SDL_Flip(ecran);
 }
 
 //==========================================================//
-//                      vérifier poussee                    //
+//                      takedamage                          //
 //==========================================================//
 
+
+bool takedamage(t_ecran_de_jeu matrice, int direction, t_pos positionHeros, int deplacement)
+{
+      if (direction == GAUCHE)
+      {
+            if (positionHeros.colonne-1 == 'm' )
+            exit(EXIT_SUCCESS);
+      }
+      else if (direction == DROITE)
+      {
+            if (positionHeros.colonne+1 == 'm' )
+            exit(EXIT_SUCCESS);
+      }
+      else if (direction == HAUT)
+      {
+            if (positionHeros.ligne-1 == 'm' )
+            exit(EXIT_SUCCESS);
+      }
+      else if (direction == BAS)
+      {
+            if (positionHeros.ligne+1 == 'm' )
+            exit(EXIT_SUCCESS);
+      }
+      return false;
+}
+//==========================================================//
+//                      Hitbox                              //
+//==========================================================//
+
+void hitbox(t_ecran_de_jeu matrice)
+{
+      if(matrice->positionHeros.colonne<1)
+      {
+            if (matrice->positionHeros.ligne<1)
+            {
+                  for(int i=matrice->positionHeros.ligne;i<matrice->positionHeros.ligne+HAUTEURHEROSPIXEL; i++)
+                  {
+                        matrice->ecran[i][matrice->positionHeros.colonne] = 'h';
+                  }
+            }
+      }
+}
+
+//==========================================================//
+//                      vérifier poussee                    //
+//==========================================================//
 
 bool verifierPoussee(t_ecran_de_jeu matrice, int direction, t_pos positionHeros, int deplacement)
 {
@@ -113,7 +174,7 @@ bool verifierPoussee(t_ecran_de_jeu matrice, int direction, t_pos positionHeros,
                   return true;
             }
       }
-      if (direction == DROITE)
+      else if (direction == DROITE)
       {
             if (positionHeros.colonne > LARGEUR-2-deplacement-LARGEURHEROSPIXEL)            // parce que la matrice est définie sur [0-(LARGEUR-1)][0-(HAUTEUR-1)]
             {                                                                               // LARGEURHEROSPIXEL pour pas que le heros dépasse l'écran
@@ -124,7 +185,7 @@ bool verifierPoussee(t_ecran_de_jeu matrice, int direction, t_pos positionHeros,
                   return true;
             }
       }
-      if (direction == HAUT)
+      else if (direction == HAUT)
       {
             if (positionHeros.ligne < 1+deplacement)
             {
@@ -135,7 +196,7 @@ bool verifierPoussee(t_ecran_de_jeu matrice, int direction, t_pos positionHeros,
                   return true;
             }
       }
-      if (direction == BAS)
+      else if (direction == BAS)
       {
             if (positionHeros.ligne > HAUTEUR -2-deplacement-HAUTEURHEROSPIXEL)                 // HAUTEURHEROSPIXEL pour pas que le heros dépasse l'écran
             {
@@ -146,6 +207,7 @@ bool verifierPoussee(t_ecran_de_jeu matrice, int direction, t_pos positionHeros,
                   return true;
             }
       }
+      takedamage(matrice, direction, positionHeros, deplacement);
       return false;
 }
 
@@ -174,10 +236,31 @@ void replacementHeros(t_ecran_de_jeu matrice, int direction, int nb)
                   if ((matrice->positionHeros.ligne == i) && (matrice->positionHeros.colonne == j))
                   {
                         matrice->ecran[i][j] = 'H';
+                        for(int i=0; i<HAUTEURHEROSPIXEL; i++)
+                        {
+                              matrice->ecran[matrice->positionHeros.ligne+i+1][matrice->positionHeros.colonne] = 'h';
+                              matrice->ecran[matrice->positionHeros.ligne+i+1][matrice->positionHeros.colonne+LARGEURHEROSPIXEL] = 'h';
+                        }
+                        for(int i=0; i<LARGEURHEROSPIXEL; i++)
+                        {
+                              matrice->ecran[matrice->positionHeros.ligne][matrice->positionHeros.colonne+i+1] = 'h';
+                              matrice->ecran[matrice->positionHeros.ligne+HAUTEURHEROSPIXEL][matrice->positionHeros.colonne+i+1] = 'h';
+                        }
                   }
                   else
                   {
-                        matrice->ecran[i][j] = ' ';
+                        if(matrice->ecran[i][j] != 'M')
+                        {
+                              matrice->ecran[i][j] = ' ';
+                        }
+                        else
+                        {
+                              for(int i=0; i<LARGEURMINE; i++)
+                              {
+                                    matrice->ecran[positionMine.x][matrice->positionHeros.colonne+i+1] = 'm';
+                                    matrice->ecran[matrice->positionHeros.ligne+HAUTEURHEROSPIXEL][matrice->positionHeros.colonne+i+1] = 'm';
+                              }
+                        }
                   }
 
             }
@@ -200,18 +283,32 @@ int main ( int argc, char** argv )
       t_ecran_de_jeu matrice;
       matrice = create_ecran_de_jeu(HAUTEUR, LARGEUR, positionHeros.x, positionHeros.y);
       initMatrice(matrice);
+      fprintf(stderr,"c'est bon initmatrice");
       int continuer = 1;
        if (SDL_INIT_VIDEO == -1)
       {
-                  fprintf(stderr, "erreur d'initialisatiion : %s\n", SDL_GetError());
+                  fprintf(stderr, "erreur d'initialisation : %s\n", SDL_GetError());
                   exit(EXIT_FAILURE);
       }
+      fprintf(stderr,"c'est bon sdl_init");
 
       ecran = SDL_SetVideoMode(LARGEUR, HAUTEUR, 32, SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_RESIZABLE);
-      SDL_FillRect(ecran, NULL, SDL_MapRGB(ecran->format, 255, 255, 255));
+
+      fprintf(stderr,"c'est bon setvideomode");
+
+      if (SDL_FillRect(ecran, NULL, SDL_MapRGB(ecran->format, 255, 255, 255) == 0))
+      {
+            fprintf(stderr,"c'bon fillrect");
+      }
+
+      fprintf(stderr, "pas de problème");
       Heros = SDL_LoadBMP("link.bmp");
+      SDL_SetColorKey(Heros, SDL_SRCCOLORKEY, SDL_MapRGB(Heros->format, 255, 0, 0));
       myMap = SDL_LoadBMP("sol4.bmp");
+      mine = SDL_LoadBMP("nvMine.bmp");
+      SDL_SetColorKey(mine, SDL_SRCCOLORKEY, SDL_MapRGB(mine->format, 255, 0, 0));
       SDL_Flip(ecran);
+
       int nbDeplacement =  1;
       Uint8 *keystates = SDL_GetKeyState( NULL );
       while(continuer)
@@ -225,7 +322,7 @@ int main ( int argc, char** argv )
                   {
                         case SDLK_ESCAPE : continuer = 0;break;
                         default : break;
-                  }
+                  }break;
             }
 
             if (keystates[SDLK_UP])                                     // les keystats permettent le déplacement en diagonal.
